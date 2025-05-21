@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerai Hafizha Proxy API Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background-color: #f1f1f1;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab.active {
+            background-color: #fff;
+            border-bottom: 1px solid #fff;
+        }
+        .tab-content {
+            display: none;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 0 5px 5px 5px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gerai Hafizha Proxy API Tester</h1>
+    
+    <div class="card">
+        <div class="form-group">
+            <label for="api-url">API URL:</label>
+            <input type="url" id="api-url" value="http://localhost:3002" placeholder="Enter the API URL">
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="openTab(event, 'test-connection')">Test Connection</div>
+            <div class="tab" onclick="openTab(event, 'search-by-name')">Search by Name</div>
+            <div class="tab" onclick="openTab(event, 'search-by-barcode')">Search by Barcode</div>
+        </div>
+        
+        <div id="test-connection" class="tab-content active">
+            <p>Test the connection to the database through the proxy API.</p>
+            <button onclick="testConnection()">Test Connection</button>
+            <div id="connection-result" class="form-group" style="margin-top: 20px;"></div>
+        </div>
+        
+        <div id="search-by-name" class="tab-content">
+            <div class="form-group">
+                <label for="product-name">Product Name:</label>
+                <input type="text" id="product-name" placeholder="Enter product name to search">
+            </div>
+            <button onclick="searchByName()">Search</button>
+            <div id="name-search-result" class="form-group" style="margin-top: 20px;"></div>
+        </div>
+        
+        <div id="search-by-barcode" class="tab-content">
+            <div class="form-group">
+                <label for="product-barcode">Product Barcode:</label>
+                <input type="text" id="product-barcode" placeholder="Enter product barcode">
+            </div>
+            <button onclick="searchByBarcode()">Search</button>
+            <div id="barcode-search-result" class="form-group" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+    
+    <script>
+        function openTab(evt, tabName) {
+            // Hide all tab content
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            
+            // Remove active class from all tabs
+            const tabs = document.getElementsByClassName("tab");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            
+            // Show the selected tab content and mark the button as active
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+        
+        function getApiUrl() {
+            return document.getElementById("api-url").value.trim();
+        }
+        
+        function displayResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            
+            if (isError) {
+                element.innerHTML = `<div class="error">Error: ${data}</div>`;
+                return;
+            }
+            
+            let html = '';
+            if (typeof data === 'object') {
+                html = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } else {
+                html = `<pre>${data}</pre>`;
+            }
+            
+            element.innerHTML = html;
+        }
+        
+        async function testConnection() {
+            const resultElement = document.getElementById("connection-result");
+            resultElement.innerHTML = '<p>Testing connection...</p>';
+            
+            try {
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}/api/database/test-connection`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultElement.innerHTML = '<p class="success">Connection successful!</p>';
+                    displayResult("connection-result", data);
+                } else {
+                    displayResult("connection-result", data, true);
+                }
+            } catch (error) {
+                displayResult("connection-result", error.message, true);
+            }
+        }
+        
+        async function searchByName() {
+            const resultElement = document.getElementById("name-search-result");
+            const productName = document.getElementById("product-name").value.trim();
+            
+            if (!productName) {
+                displayResult("name-search-result", "Please enter a product name", true);
+                return;
+            }
+            
+            resultElement.innerHTML = '<p>Searching...</p>';
+            
+            try {
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}/api/products/search?name=${encodeURIComponent(productName)}`);
+                const data = await response.json();
+                
+                if (Array.isArray(data) && data.length === 0) {
+                    resultElement.innerHTML = '<p>No products found with that name.</p>';
+                } else {
+                    displayResult("name-search-result", data);
+                }
+            } catch (error) {
+                displayResult("name-search-result", error.message, true);
+            }
+        }
+        
+        async function searchByBarcode() {
+            const resultElement = document.getElementById("barcode-search-result");
+            const barcode = document.getElementById("product-barcode").value.trim();
+            
+            if (!barcode) {
+                displayResult("barcode-search-result", "Please enter a barcode", true);
+                return;
+            }
+            
+            resultElement.innerHTML = '<p>Searching...</p>';
+            
+            try {
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}/api/products/search?barcode=${encodeURIComponent(barcode)}`);
+                const data = await response.json();
+                
+                if (Array.isArray(data) && data.length === 0) {
+                    resultElement.innerHTML = '<p>No product found with that barcode.</p>';
+                } else {
+                    displayResult("barcode-search-result", data);
+                }
+            } catch (error) {
+                displayResult("barcode-search-result", error.message, true);
+            }
+        }
+    </script>
+</body>
+</html>
